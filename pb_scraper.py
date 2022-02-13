@@ -16,10 +16,10 @@ def parse_table_data(row):
         # if it is the first index, then it requires special parsing
         # to get the data we want
         if index == 0:
-            row_data.append(td.find('a').get('title'))
+            row_data.append(td.find('a').get('title').strip())
             continue
         
-        row_data.append(td.get_text())
+        row_data.append(td.get_text().strip().replace(", ", ":"))
     
     return row_data
 
