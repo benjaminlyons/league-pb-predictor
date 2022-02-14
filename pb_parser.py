@@ -64,7 +64,7 @@ def generate_champion_stats(df):
 def main():
     df = pd.read_csv("pb_table.csv")
 
-    analyze_pb_data(df)
+    generate_champion_stats(df)
 
 if __name__ == "__main__":
     main()
