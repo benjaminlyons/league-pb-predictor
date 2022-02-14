@@ -9,17 +9,24 @@ def analyze_pb_row(row, champion_stats):
     for ban in ban_headers:
         champ = row[ban]
 
+        if champ == "MISSING DATA" or champ == "None":
+            continue
+
         if not champ in champion_stats:
             champion_stats[champ] = {"bans": 0, "picks": 0, "wins": 0, "games": 0}
         
         champion_stats[champ]["bans"] += 1
 
     for pick in pick_headers:
+
         # determine if the team that  made this pick won the game
         blue_pick = True if "B" in pick else False
         winning_pick = (blue_pick and blue_wins) or (not blue_pick and not blue_wins)
 
         champ1 = row[pick]
+
+        if champ1 == "MISSING DATA" or champ1 == "None":
+            continue
 
         # if their are two picks at once bc of snake draft
         if "-" in pick: 
@@ -56,15 +63,40 @@ def generate_champion_stats(df):
         if champion_stats[champ]["games"]:
             champion_stats[champ]["win_rate"] = champion_stats[champ]["wins"] / champion_stats[champ]["games"]
 
-    print(champion_stats["Rakan"])
-
     return champion_stats
+
+def summarize_pb_stats(champion_stats):
+    
+    print("------ Pick/Ban Stats ------")
+    print("Top 3 most picked:")
+    for index, champ in enumerate(sorted(champion_stats.items(), key = lambda champ: champ[1]["pick_rate"], reverse=True)):
+        if index >= 3:
+            break
+        print(f"\t{index}. {champ[0]}: {champ[1]}")
+
+    print()
+    print("Top 3 most banned:")
+    for index, champ in enumerate(sorted(champion_stats.items(), key = lambda champ: champ[1]["ban_rate"], reverse=True)):
+        if index >= 3:
+            break
+        print(f"\t{index}. {champ[0]}: {champ[1]}")
+
+    print()
+    print("Top 3 highest presence:")
+    for index, champ in enumerate(sorted(champion_stats.items(), key = lambda champ: champ[1]["ban_rate"] + champ[1]["pick_rate"], reverse=True)):
+        if index >= 3:
+            break
+        print(f"\t{index}. {champ[0]}: {champ[1]}")
+    print()
+    print(f"Total champions picked: {len(champion_stats.keys())}")
+
 
 
 def main():
     df = pd.read_csv("pb_table.csv")
 
-    generate_champion_stats(df)
+    champion_stats = generate_champion_stats(df)
+    summarize_pb_stats(champion_stats)
 
 if __name__ == "__main__":
     main()
