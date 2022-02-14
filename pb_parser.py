@@ -1,4 +1,5 @@
 import pandas as pd
+import matplotlib.pyplot as plt
 
 def analyze_pb_row(row, champion_stats):
     ban_headers = ["BB1", "RB1", "BB2", "RB2", "BB3", "RB3", "RB4", "BB4", "RB5", "BB5"]
@@ -90,6 +91,24 @@ def summarize_pb_stats(champion_stats):
     print()
     print(f"Total champions picked: {len(champion_stats.keys())}")
 
+def generate_pb_histograms(champion_stats):
+    pick_rates = [ champion_stats[champ]["pick_rate"] for champ in champion_stats ]
+    ban_rates = [ champion_stats[champ]["ban_rate"] for champ in champion_stats ]
+    win_rates = [ champion_stats[champ]["win_rate"] for champ in champion_stats if "win_rate" in champion_stats[champ] ]
+    presence_rates  = [ champion_stats[champ]["pick_rate"] + champion_stats[champ]["ban_rate"] for champ in champion_stats ]
+
+    n_bins = 20
+    fig, axs = plt.subplots(2, 2, tight_layout=True, figsize=(10,10))
+    axs[0][0].set_title("Pick Rate Distribution")
+    axs[0][1].set_title("Ban Rate Distribution")
+    axs[1][0].set_title("Win Rate Distribution")
+    axs[1][1].set_title("Presence Rate Distribution")
+    axs[0][0].hist(pick_rates, bins=n_bins)
+    axs[0][1].hist(ban_rates, bins=n_bins)
+    axs[1][0].hist(win_rates, bins=n_bins)
+    axs[1][1].hist(presence_rates, bins=n_bins)
+
+    plt.savefig("pb_histograms.jpg")
 
 
 def main():
@@ -97,6 +116,7 @@ def main():
 
     champion_stats = generate_champion_stats(df)
     summarize_pb_stats(champion_stats)
+    generate_pb_histograms(champion_stats)
 
 if __name__ == "__main__":
     main()
