@@ -6,4 +6,7 @@ LCK+2021+Spring
 LCK+2021+Summer
 LPL+2021+Spring
 LPL+2021+Summer
+EM+2021+Summer+Main+Event
+LFL+2021+Spring
+LFL+2021+Summer
 Worlds+2021+Main+Event
