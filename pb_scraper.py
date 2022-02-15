@@ -54,7 +54,9 @@ def main():
 
     with open('pb_table.csv', 'w') as f:
         for index, event in enumerate(events):
+            print(f"Downloading {event}...", end='')
             headers, data = scrape_event_pb(event)
+            print("Done!")
 
             if index == 0:
                 f.write(','.join(headers) + '\n')
