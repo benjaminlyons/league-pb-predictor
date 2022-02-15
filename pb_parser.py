@@ -14,6 +14,12 @@ def generate_pairs(sequence1, sequence2):
     return pairs
 
 def find_common_pairs(drafts):
+    def compute_freqs(pairs, freqs):
+        for pair in pairs:
+            if not pair in freqs:
+                freqs[pair] = 0
+            freqs[pair] += 1
+
     synergies = {}
     counters = {}
     for draft in drafts:
@@ -25,25 +31,38 @@ def find_common_pairs(drafts):
 
         counter_pairs = generate_pairs(blue_picks, red_picks)
 
-        for pair in blue_pairs:
-            if not pair in synergies:
-                synergies[pair] = 0
-            synergies[pair] += 1
-
-        for pair in red_pairs:
-            if not pair in synergies:
-                synergies[pair] = 0
-            synergies[pair] += 1
-
-        for pair in counter_pairs:
-            if not pair in counters:
-                counters[pair] = 0
-            counters[pair] += 1
+        compute_freqs(blue_pairs, synergies)
+        compute_freqs(red_pairs, synergies)
+        compute_freqs(counter_pairs, counters)
 
     return synergies, counters
 
+def update_bans(champ, champion_stats, team_stats, team):
+    if not champ in champion_stats:
+        champion_stats[champ] = {"bans": 0, "picks": 0, "wins": 0}
+
+    champion_stats[champ]["bans"] += 1
+
+    if not champ in team_stats[team]:
+        team_stats[team][champ] = {"bans": 0, "picks": 0, "wins": 0}
+
+    team_stats[team][champ]["bans"] += 1
+
+def update_picks(champ, champion_stats, team_stats, team, winning_pick):
+    if not champ in champion_stats:
+        champion_stats[champ] = {"bans": 0, "picks": 0, "wins": 0}
+
+    champion_stats[champ]["picks"] += 1
+    champion_stats[champ]["wins"] += int(winning_pick)
+
+    if not champ in team_stats[team]:
+        team_stats[team][champ] = {"bans": 0, "picks": 0, "wins": 0}
+
+    team_stats[team][champ]["picks"] += 1
+    team_stats[team][champ]["wins"] += int(winning_pick)
+
 # parses the row and puts the relevant data into champion_stats and drafts
-def analyze_pb_row(row, champion_stats, drafts):
+def analyze_pb_row(row, champion_stats, drafts, team_stats):
     ban_headers = ["BB1", "RB1", "BB2", "RB2", "BB3", "RB3", "RB4", "BB4", "RB5", "BB5"]
     pick_headers = ["BP1", "RP1-2", "BP2-3", "RP3", "RP4", "BP4-5", "RP5"]
 
@@ -53,6 +72,23 @@ def analyze_pb_row(row, champion_stats, drafts):
     blue_pick_sequence = []
 
     blue_wins = True if row['Winner'] == 1 else False
+    
+    blue_team = row["Blue"]
+    red_team = row["Red"]
+
+    if not blue_team in team_stats:
+        team_stats[blue_team] = {"games": 0, "wins": 0}
+
+    if not red_team in team_stats:
+        team_stats[red_team] = {"games": 0, "wins": 0}
+
+    team_stats[blue_team]["games"] += 1
+    team_stats[red_team]["games"] += 1
+
+    if blue_wins:
+        team_stats[blue_team]["wins"] += 1
+    else:
+        team_stats[red_team]["wins"] += 1
 
     for ban in ban_headers:
         blue_ban = False if "R" in ban else True
@@ -61,14 +97,11 @@ def analyze_pb_row(row, champion_stats, drafts):
         if champ == "MISSING DATA" or champ == "None":
             continue
 
-        if not champ in champion_stats:
-            champion_stats[champ] = {"bans": 0, "picks": 0, "wins": 0, "games": 0}
-        
-        champion_stats[champ]["bans"] += 1
-
         if blue_ban:
+            update_bans(champ, champion_stats, team_stats, blue_team)
             blue_ban_sequence.append(champ)
         else:
+            update_bans(champ, champion_stats, team_stats, red_team)
             red_ban_sequence.append(champ)
 
     for pick in pick_headers:
@@ -87,53 +120,52 @@ def analyze_pb_row(row, champion_stats, drafts):
             champ1 = row[pick].split(':')[0]
             champ2 = row[pick].split(':')[1]
 
-            if not champ2 in champion_stats:
-                champion_stats[champ2] = {"bans": 0, "picks": 0, "wins": 0, "games": 0}
-
-            champion_stats[champ2]["picks"] += 1
-            champion_stats[champ2]["games"] += 1
-            champion_stats[champ2]['wins'] += int(winning_pick)
-
             if blue_pick:
+                update_picks(champ2, champion_stats, team_stats, blue_team, winning_pick)
                 blue_pick_sequence.append(champ2)
             else:
+                update_picks(champ2, champion_stats, team_stats, red_team, winning_pick)
                 red_pick_sequence.append(champ2)
 
-
-        if not champ1 in champion_stats:
-            champion_stats[champ1] = {"bans": 0, "picks": 0, "wins": 0, "games": 0}
-
-        champion_stats[champ1]["picks"] += 1
-        champion_stats[champ1]["games"] += 1
-        champion_stats[champ1]["wins"] += int(winning_pick)
-
         if blue_pick:
+            update_picks(champ1, champion_stats, team_stats, blue_team, winning_pick)
             blue_pick_sequence.append(champ1)
         else:
+            update_picks(champ1, champion_stats, team_stats, red_team, winning_pick)
             red_pick_sequence.append(champ1)
 
     drafts.append({"blue_pick_sequence": blue_pick_sequence, "red_pick_sequence": red_pick_sequence, "blue_ban_sequence": blue_ban_sequence, "red_ban_sequence": red_ban_sequence})
 
 def generate_pb_stats(df):
     champion_stats = {}
+    team_stats = {}
     drafts = []
     total_games = len(df)
 
     for index, row in df.iterrows():
-        analyze_pb_row(row, champion_stats, drafts)
+        analyze_pb_row(row, champion_stats, drafts, team_stats)
 
     # compute the rate stats
     for champ in champion_stats:
         champion_stats[champ]["pick_rate"] = champion_stats[champ]["picks"] / total_games
         champion_stats[champ]["ban_rate"] = champion_stats[champ]["bans"] / total_games
 
-        if champion_stats[champ]["games"]:
-            champion_stats[champ]["win_rate"] = champion_stats[champ]["wins"] / champion_stats[champ]["games"]
+        if champion_stats[champ]["picks"]:
+            champion_stats[champ]["win_rate"] = champion_stats[champ]["wins"] / champion_stats[champ]["picks"]
 
-    return champion_stats, drafts
+        for team in team_stats:
+            if not champ in team_stats[team]:
+                continue
+
+            team_stats[team][champ]["pick_rate"] = team_stats[team][champ]["picks"] / team_stats[team]["games"]
+            team_stats[team][champ]["ban_rate"] = team_stats[team][champ]["bans"] / team_stats[team]["games"]
+
+            if team_stats[team][champ]["picks"]:
+                team_stats[team][champ]["win_rate"] = team_stats[team][champ]["wins"] / team_stats[team][champ]["picks"]
+
+    return champion_stats, drafts, team_stats
 
 def summarize_pb_stats(champion_stats, drafts):
-    
     print("------ Pick/Ban Stats ------")
     print("Top 3 most picked:")
     for index, champ in enumerate(sorted(champion_stats.items(), key = lambda champ: champ[1]["pick_rate"], reverse=True)):
@@ -202,13 +234,14 @@ def generate_pb_histograms(champion_stats, drafts):
 
     plt.savefig("pairings_histograms.jpg")
 
-
 def main():
     df = pd.read_csv("pb_table.csv")
 
-    champion_stats, drafts = generate_pb_stats(df)
+    champion_stats, drafts, team_stats = generate_pb_stats(df)
     summarize_pb_stats(champion_stats, drafts)
     generate_pb_histograms(champion_stats, drafts)
+    
+    print(team_stats["Fnatic"]["Twisted Fate"])
 
 if __name__ == "__main__":
     main()
