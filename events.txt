@@ -15,6 +15,7 @@ LPL+2021+Spring
 LPL+2021+Spring+Playoffs
 LPL+2021+Summer
 LPL+2021+Summer+Playoffs
+EM+2021+Spring+Main+Event
 EM+2021+Summer+Main+Event
 LFL+2021+Spring
 LFL+2021+Summer
@@ -34,4 +35,11 @@ TCL+2021+Winter
 TCL+2021+Summer
 VCS+2021+Spring
 VCS+2021+Winter
+MSI+2021
 Worlds+2021+Main+Event
+NA+Academy+2021+Spring
+NA+Academy+2021+Summer
+Unified+Grand+Prix+2021+Spring
+Giant+Slayer+Gauntlet+2021+Spring
+LCS+Proving+Grounds+2021+Spring
+LCS+Proving+Grounds+2021+Summer

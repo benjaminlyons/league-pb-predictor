@@ -56,13 +56,14 @@ def main():
         for index, event in enumerate(events):
             print(f"Downloading {event}...", end='')
             headers, data = scrape_event_pb(event)
-            print("Done!")
 
             if index == 0:
                 f.write(','.join(headers) + '\n')
 
             for row in data:
                 f.write(','.join(row) + '\n')
+
+            print("Done!")
 
 
 if __name__ == "__main__":
