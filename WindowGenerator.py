@@ -157,3 +157,43 @@ class WindowGenerator():
             # And cache it for next time
             self._example = result
         return result
+
+class SplitGen:
+
+    @staticmethod
+    def inner_divider(sequence, n_steps_in, n_steps_out):
+        X, y = list(), list()
+        for i in range(len(sequence)):
+            # find the end of this pattern
+            end_ix = i + n_steps_in
+            out_end_ix = end_ix + n_steps_out
+            # check if we are beyond the sequence
+            if out_end_ix > len(sequence):
+                break
+            # gather input and output parts of the pattern
+            seq_x, seq_y = sequence[i:end_ix], sequence[end_ix:out_end_ix]
+            X.append(seq_x)
+            y.append(seq_y)
+        return np.array(X), np.array(y)
+
+    @staticmethod
+    def oneHotandReshape(X, n_features):
+        a = X.astype(np.int32)
+        b = np.zeros((a.size, n_features))
+        b[np.arange(a.size),a] = 1
+        X = b.reshape(X.shape[0], b.shape[0], b.shape[1])
+        return X
+
+    def split_sequences(self,inputArray, n_steps_in, n_steps_out, n_features):
+        X, Y = list(), list()
+
+        for i in inputArray:
+            x, y = self.inner_divider(i, n_steps_in, n_steps_out)
+            x = self.oneHotandReshape(x, n_features)
+            y = self.oneHotandReshape(y, n_features)
+            X.append(x)
+            Y.append(y)
+        X = np.concatenate(X)
+        y = np.concatenate(Y)
+
+        return X, y
