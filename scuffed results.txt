@@ -3,3 +3,5 @@
 
 
 max on test: mse_bilstm: [0.007117485161870718, 0.1041666641831398]
+
+(bilstm 512, repeat, timedense 64, timedense feature)
