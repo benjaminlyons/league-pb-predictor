@@ -170,7 +170,7 @@ class ChampionWrapper():
         :param _id: any integer from 1 to 555. if there is a champion, it will return the name.
         :return: champions name
         """
-        return self.idToChamp.get(id, 'Other')
+        return self.idToChamp.get(_id, 'Other')
 
     def cNameToId(self, name):
         return self.champToID.get(name, 0)

@@ -1,5 +1,6 @@
 import pandas as pd
 import matplotlib.pyplot as plt
+from championWrapper import ChampionWrapper
 
 # find all pairs of unique champions between these two sequences
 # each pair is in alphabetical order
@@ -234,6 +235,21 @@ def generate_pb_histograms(champion_stats, drafts):
 
     plt.savefig("pairings_histograms.jpg")
 
+def write_team_stats(team_stats, f):
+    champs = ChampionWrapper()
+    header = ["team_name"]
+    for champ_id in range(158):
+        header.append(champs.cIdToName(champ_id))
+
+    f.write(",".join(header) + "\n")
+    for team in team_stats:
+        team_row = [team]
+        for champ_id in range(158):
+            champ_name = champs.cIdToName(champ_id)
+            pick_rate = team_stats[team].get(champ_name, {"pick_rate": 0})["pick_rate"]
+            team_row.append(str(pick_rate))
+        f.write(",".join(team_row) + "\n")
+
 def main():
     df = pd.read_csv("pb_table.csv")
 
@@ -242,6 +258,8 @@ def main():
     generate_pb_histograms(champion_stats, drafts)
     
     print(team_stats["Fnatic"]["Twisted Fate"])
+    with open("team_stats.csv", 'w') as f:
+        write_team_stats(team_stats, f)
 
 if __name__ == "__main__":
     main()
